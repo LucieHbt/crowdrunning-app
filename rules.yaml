@@ -1,0 +1,550 @@
+# Règles réglementaires évaluées par rules.py.
+#
+# Chaque règle porte sa source (article, page imprimée, courte citation vérifiable) pour que
+# l'organisateur puisse contrôler. Ajouter ou corriger une règle = modifier ce fichier, sans toucher au code.
+#
+# Champs d'une règle :
+#   id, theme, title            identifiant unique, thème d'affichage (voir meta.themes), titre court
+#   article, page               référence dans le règlement ; page = numéro imprimé (« Page N sur 55 »)
+#   force                       obligation | recommandation | information
+#   text                        résumé de la règle (paraphrase fidèle, avec les seuils chiffrés)
+#   quote                       courte citation textuelle (contrôlée automatiquement contre le PDF par test_rules.py)
+#   when / when_any             conditions d'application (voir rules.py : runners_gt, length_km_gte, event_type, ...)
+#   check                       type de contrôle + paramètres (count, water_spacing, sponge_midpoints, response_time,
+#                               manual, deadline, info)
+#   fix                         conseil affiché quand la règle n'est pas respectée
+#   interpretation              précision quand l'application a dû interpréter le texte (ex. « environ »)
+#   note                        ambiguïté ou limite du texte
+#   derived                     true si la règle est déduite du texte et non énoncée telle quelle
+#
+# Ce que ce règlement NE contient PAS (et que l'application ne peut donc pas contrôler) : voir meta.not_covered.
+
+meta:
+  document: "Règlement des manifestations Running — Fédération Française d'Athlétisme (FFA)"
+  adopted: "Comité Directeur FFA des 5 et 6 décembre 2025"
+  applicable_from: "2026-01-15"
+  source_file: "Reglementation_Running_2026.pdf"
+  jurisdiction: "France"
+  rules_version: "2026.1"
+  page_numbering: "Les numéros de page sont ceux imprimés en bas du règlement (« Page N sur 55 ») ; le fichier PDF compte une page de couverture de plus."
+  scope: "Règlement fédéral. Les titres II-A, III-A, IV et V s'appliquent à tous les organisateurs, affiliés ou non à la FFA ; les titres II-B et III-B seulement aux organisateurs affiliés (préambule, p. 5). Il ne remplace ni le Code du sport, ni les arrêtés préfectoraux ou municipaux, ni l'avis de la FFA."
+  themes:
+    - "Démarches administratives"
+    - "Parcours et participants"
+    - "Ravitaillement"
+    - "Sécurité"
+    - "Dispositif de secours"
+    - "Trail et courses nature — santé secours"
+  not_covered:
+    - "Toilettes / sanitaires : aucune règle chiffrée dans ce règlement."
+    - "Densité de coureurs, largeur de couloir ou débit au départ (hors cross-country : largeur minimale 5 m, optimale 8 m, art. III.B.2) : aucune règle. Les seuils 0,3 / 0,5 coureur/m² de l'application sont les siens, pas ceux du règlement."
+    - "Délai d'intervention des secours sur route : aucun délai chiffré (les 30 min concernent les trails, art. IV.E.2)."
+    - "Nombre de secouristes ou d'ambulances sur route : le règlement dit « un nombre adapté » sans le chiffrer."
+    - "Dates limites de demande de label (art. II.B.1) : elles visent les saisons 2025-2026 et ne sont pas reprises."
+    - "Règles des labels, boucles, sas élite, mesurage détaillé, relais, courses à obstacles (titre V) : non évaluées."
+
+rules:
+  # ------------------------------------------------------------------ Démarches administratives
+  - id: adm-declaration
+    theme: "Démarches administratives"
+    title: "Déclaration préalable de la compétition"
+    article: "II.A.1.1.1"
+    page: 8
+    force: obligation
+    when: {competition: true, public_road: true}
+    text: "Une compétition qui se déroule en tout ou partie sur une voie publique ou ouverte à la circulation doit être déclarée à l'autorité administrative (maire, préfet de département, préfet de police à Paris). La déclaration doit lui parvenir au moins 2 mois avant l'épreuve, 3 mois si elle se déroule sur plusieurs départements."
+    quote: "Ce délai est porté à trois mois lorsque la manifestation se déroule sur le territoire de plusieurs départements."
+    check: {type: deadline, kind: months, value: 2, value_if_multi_department: 3, label: "Dépôt de la déclaration"}
+    fix: "Le délai ne peut plus être respecté pour cette date : voir sans attendre avec l'autorité concernée (préfecture, mairie) ou décaler l'épreuve."
+
+  - id: adm-declaration-100
+    theme: "Démarches administratives"
+    title: "Déclaration d'une manifestation sans classement de 100 participants ou plus"
+    article: "II.A.1.2"
+    page: 9
+    force: obligation
+    when: {competition: false, public_road: true, runners_gte: 100}
+    text: "Une manifestation sans classement, sans chronométrage et sans horaire fixé à l'avance, sur voie publique, regroupant au moins 100 participants, doit être déclarée au plus tard un mois avant la date."
+    quote: "comptant au moins cent participants dépose une déclaration, au plus tard un mois avant la date de la manifestation"
+    note: "Le titre de l'article dit « plus de cent » et le texte « au moins cent » : l'application retient 100 participants ou plus."
+    check: {type: deadline, kind: months, value: 1, label: "Dépôt de la déclaration"}
+    fix: "Le délai ne peut plus être respecté pour cette date : voir avec l'autorité concernée ou décaler l'épreuve."
+
+  - id: adm-signaleurs-arretes
+    theme: "Démarches administratives"
+    title: "Liste des signaleurs et arrêtés de circulation"
+    article: "II.A.1.1.1"
+    page: 9
+    force: obligation
+    when: {competition: true, public_road: true}
+    text: "La liste des signaleurs (nom, prénom, date et lieu de naissance, numéro de permis) et les arrêtés pris par les autorités pour la circulation doivent être fournis au plus tard trois semaines avant la manifestation. Le récépissé de déclaration est délivré, dossier complet, au plus tard trois semaines avant."
+    quote: "Elle est fournie au plus tard trois semaines avant la date de la manifestation"
+    check: {type: deadline, kind: days, value: 21, label: "Liste des signaleurs et arrêtés"}
+    fix: "Délai dépassé : contacter la préfecture pour savoir si le dossier peut encore être complété."
+
+  - id: adm-assurance
+    theme: "Démarches administratives"
+    title: "Attestation d'assurance de l'organisateur"
+    article: "II.A.1.1.1 et II.A.1.4.1"
+    page: 10
+    force: obligation
+    text: "L'organisateur doit souscrire une assurance couvrant sa responsabilité civile, celle des participants et celle des arbitres, juges, salariés et bénévoles. L'attestation est fournie aux services préfectoraux au plus tard six jours francs avant le début de la manifestation. Ne pas s'assurer est puni de 6 mois d'emprisonnement et 7 500 € d'amende."
+    quote: "doit être fournie aux services préfectoraux lors du dépôt de l'autorisation ou de la déclaration, au plus tard six jours francs avant le début de la manifestation"
+    interpretation: "« Six jours francs » : le jour de remise et le jour de l'épreuve ne comptent pas ; l'application retient donc J-7 comme date limite."
+    check: {type: deadline, kind: jours_francs, value: 6, label: "Attestation d'assurance"}
+    fix: "Délai dépassé : transmettre l'attestation sans attendre."
+
+  - id: adm-ffa-autorisation
+    theme: "Démarches administratives"
+    title: "Autorisation de la FFA (organisateur non affilié)"
+    article: "II.A.2"
+    page: 11
+    force: obligation
+    when: {competition: true, ffa_affiliated: false}
+    text: "Un organisateur non affilié à la FFA dont la manifestation est ouverte aux licenciés FFA ou à des étrangers licenciés, avec remise de prix (seuil de 3 000 €, art. A.331-1), doit obtenir l'autorisation de la FFA, demandée au moins trois mois avant la date. Organiser sans autorisation est passible de 15 000 € d'amende."
+    quote: "au moins trois mois avant la date de la manifestation"
+    note: "Ne concerne que les manifestations décrites à l'article II.A.2 : à vérifier dans le texte."
+    check: {type: deadline, kind: months, value: 3, label: "Demande d'autorisation à la FFA"}
+    fix: "Délai dépassé : prendre contact avec le comité départemental d'athlétisme."
+
+  - id: adm-ffa-avis
+    theme: "Démarches administratives"
+    title: "Demande d'avis de la FFA pour le dossier de déclaration"
+    article: "II.A.1.1.2"
+    page: 9
+    force: information
+    when: {competition: true, public_road: true, ffa_affiliated: false}
+    text: "L'organisateur d'une compétition doit recueillir l'avis de la FFA sur les règles techniques et de sécurité. Le comité départemental rend son avis dans un mois à compter de la réception de la demande ; à défaut, l'avis est réputé rendu. Les clubs et comités affiliés inscrits au calendrier FFA en sont dispensés."
+    quote: "dans un délai d'un mois à compter de la date de réception de la demande d'avis"
+    derived: true
+    note: "Date déduite : la déclaration doit parvenir 2 mois avant (3 si plusieurs départements) et la FFA dispose d'un mois pour répondre, d'où une demande à déposer environ 3 mois avant (4 mois si plusieurs départements)."
+    check: {type: deadline, kind: months, value: 3, value_if_multi_department: 4, label: "Demande d'avis à la FFA"}
+    fix: "Délai dépassé : déposer la demande d'avis immédiatement auprès du comité départemental."
+
+  - id: adm-participants
+    theme: "Démarches administratives"
+    title: "Licence ou Pass Prévention Santé des participants"
+    article: "II.A.3"
+    page: 11
+    force: obligation
+    when: {competition: true}
+    text: "Les majeurs présentent une licence FFA en cours de validité (Athlé Compétition, Entreprise ou Running) ou un Pass Prévention Santé (PPS) délivré au maximum un an avant l'épreuve. Les mineurs présentent une licence, ou un questionnaire de santé ou une attestation FFA. L'organisateur conserve les justificatifs 10 ans."
+    quote: "le PPS doit avoir été délivré au maximum un (1) an avant la date de la manifestation"
+    check: {type: manual, confirm: "Les licences / PPS (majeurs) et licences ou attestations (mineurs) seront contrôlés à l'inscription et conservés"}
+
+  # ------------------------------------------------------------------ Parcours et participants
+  - id: parc-categories
+    theme: "Parcours et participants"
+    title: "Catégories d'âge autorisées sur cette distance"
+    article: "III.A.3"
+    page: 16
+    force: obligation
+    text: "Sur route, la distance maximale dépend de la catégorie : Masters, seniors et espoirs illimitée ; juniors (U20) 25 km ; cadets (U18) 15 km ; minimes (U16) 5 km ; benjamins (U14) 3 km. Poussins : voir le tableau de cross ; aucune compétition pour les baby athlé. Sur trail, la comparaison porte sur le km-effort (distance + 1 km par 100 m de dénivelé positif)."
+    quote: "les U16, U18, U20 ne pourront s'inscrire si le km-effort est supérieur à la distance maximale de leur catégorie"
+    check:
+      type: info
+      compute: age_categories
+      always_open: "Masters, Seniors, Espoirs"
+      limits:
+        - {category: "Juniors (U20)", max_km: 25}
+        - {category: "Cadets (U18)", max_km: 15}
+        - {category: "Minimes (U16)", max_km: 5}
+        - {category: "Benjamins (U14)", max_km: 3}
+
+  - id: parc-distance-officielle
+    theme: "Parcours et participants"
+    title: "Mesurage d'une distance officielle"
+    article: "I.B et III.B.2.2"
+    page: 6
+    force: obligation
+    when: {event_type: route}
+    text: "Une course qui annonce une distance officielle (mile, 5, 10, 15, 20 km, semi-marathon, marathon, ekiden, 100 km) doit avoir été mesurée officiellement. La longueur ne doit pas être inférieure à la distance annoncée et l'imprécision ne doit pas dépasser 0,1 % (10 m pour 10 km, 42 m pour un marathon). Le mesurage se fait à la bicyclette étalonnée, à 30 cm des obstacles, sur la trajectoire la plus courte (p. 22)."
+    quote: "doivent obligatoirement avoir été mesurées officiellement"
+    note: "L'obligation de mesurage officiel (I.B, p. 6) vise toute course qui annonce une distance officielle. La tolérance de 0,1 % et la méthode de mesurage (III.B.2.2, p. 22) relèvent du titre III-B, applicable aux seuls organisateurs affiliés à la FFA (préambule, p. 5)."
+    check:
+      type: info
+      compute: official_distance
+      window: 0.05
+      tolerance: 0.001
+      distances_km:
+        - {name: "Mile", km: 1.60934}
+        - {name: "5 km", km: 5.0}
+        - {name: "10 km", km: 10.0}
+        - {name: "15 km", km: 15.0}
+        - {name: "20 km", km: 20.0}
+        - {name: "semi-marathon", km: 21.1}
+        - {name: "marathon", km: 42.195}
+        - {name: "100 km", km: 100.0}
+
+  # ------------------------------------------------------------------ Ravitaillement
+  - id: rav-depart-arrivee
+    theme: "Ravitaillement"
+    title: "Eau et rafraîchissements au départ et à l'arrivée"
+    article: "III.A.5.1"
+    page: 17
+    force: obligation
+    text: "De l'eau et des rafraîchissements appropriés doivent être disponibles au départ et à l'arrivée des courses."
+    quote: "doivent être disponibles au départ et à l'arrivée des courses"
+    check: {type: manual, confirm: "Eau et rafraîchissements prévus au départ et à l'arrivée"}
+
+  - id: rav-presence
+    theme: "Ravitaillement"
+    title: "Postes de ravitaillement le long du parcours (5 à 10 km)"
+    article: "III.A.5.1"
+    page: 17
+    force: obligation
+    when: {event_type: route, length_km_gt: 5, length_km_lte: 10}
+    text: "Hors autosuffisance, des postes de ravitaillement et d'épongeage doivent être prévus le long du parcours, en eau en quantité permettant à chaque participant de se désaltérer, et leur position doit être communiquée aux concurrents."
+    quote: "doivent être prévus le long du parcours"
+    note: "Le texte ne fixe pas de distance minimale pour cette règle ; l'application ne la contrôle qu'au-delà de 5 km."
+    check: {type: count, kind: water, measure: objects, min: 1, noun: "point(s) d'eau"}
+    fix: "Poser au moins un point d'eau à mi-parcours."
+
+  - id: rav-espacement
+    theme: "Ravitaillement"
+    title: "Premier ravitaillement vers le km 5, puis tous les 5 km environ (plus de 10 km)"
+    article: "III.A.5.1"
+    page: 18
+    force: obligation
+    when: {event_type: route, length_km_gt: 10}
+    text: "Sur les courses de plus de 10 km, des postes de ravitaillement sont installés : le premier aux environs du 5e kilomètre, les suivants tous les 5 km environ, et un à l'arrivée."
+    quote: "les suivants tous les 5 km environ"
+    interpretation: "« Environ » est interprété comme ± 1 km (premier poste entre les km 4 et 6, intervalles de 4 à 6 km). Ce choix est celui de l'application ; il se règle dans ce fichier."
+    check: {type: water_spacing, first_km: 5.0, first_tol_km: 1.0, max_gap_km: 5.0, gap_tol_km: 1.0}
+    fix: "Poser ou déplacer des points d'eau pour respecter ces intervalles."
+
+  - id: rav-eponge-mi-chemin
+    theme: "Ravitaillement"
+    title: "Postes d'épongeage et de rafraîchissement à mi-chemin des ravitaillements (plus de 10 km)"
+    article: "III.A.5.1"
+    page: 18
+    force: obligation
+    when: {event_type: route, length_km_gt: 10}
+    text: "Sur les courses de plus de 10 km, des postes d'épongeage et de rafraîchissement (eau uniquement) sont installés à mi-chemin entre les postes de ravitaillement, ou plus fréquemment selon les conditions atmosphériques. L'organisation respecte les règles sanitaires en vigueur pour l'épongeage."
+    quote: "seront installés à mi-chemin entre les postes de ravitaillement, ou plus fréquemment selon les conditions atmosphériques"
+    interpretation: "« À mi-chemin » est interprété comme à ± 25 % de l'intervalle autour du milieu de deux points d'eau consécutifs."
+    check: {type: sponge_midpoints, tol_fraction: 0.25}
+    fix: "Poser un poste « Épongeage / rafraîchissement » au milieu de chaque intervalle signalé."
+
+  - id: rav-eponge-meteo
+    theme: "Ravitaillement"
+    title: "Rafraîchissement et épongeage entre les ravitaillements selon la météo (5 à 10 km)"
+    article: "III.A.5.1"
+    page: 17
+    force: obligation
+    when: {event_type: route, length_km_gt: 5, length_km_lte: 10}
+    text: "Sur les courses de plus de 5 km, lorsque les conditions météorologiques le justifient, des postes de rafraîchissement (eau uniquement) et d'épongeage sont installés entre les ravitaillements."
+    quote: "lorsque les conditions météorologiques le justifient, des postes de rafraîchissement (que de l'eau) et d'épongeage seront installés entre les ravitaillements"
+    check: {type: manual, confirm: "Des postes de rafraîchissement / épongeage sont prévus, ou la météo ne le justifie pas"}
+
+  - id: rav-zones
+    theme: "Ravitaillement"
+    title: "Zones de ravitaillement, ravitaillements personnels et zones de propreté"
+    article: "III.A.5.2, 5.3 et 5.5"
+    page: 18
+    force: obligation
+    text: "La zone de ravitaillement est délimitée (barrières, tables, marques au sol, panneaux début et fin de zone) et ne se situe pas directement sur la ligne du parcours mesuré. Les ravitaillements personnels sont déposés sur une table réservée, 20 m avant le ravitaillement collectif. Les zones de propreté sont matérialisées de 20 m avant le ravitaillement à 100 m après."
+    quote: "La zone de ravitaillement sera délimitée au moyen de barrières, tables et/ou marques au sol et panneaux"
+    check: {type: manual, confirm: "Zones de ravitaillement, tables personnelles (20 m avant) et zones de propreté (20 m avant / 100 m après) prévues"}
+
+  # ------------------------------------------------------------------ Sécurité
+  - id: sec-signaleurs
+    theme: "Sécurité"
+    title: "Signaleurs sur la voie publique"
+    article: "III.A.6.2"
+    page: 19
+    force: obligation
+    when: {public_road: true}
+    text: "Les signaleurs doivent être majeurs, titulaires du permis de conduire et agréés par l'autorité, porter un gilet jaune à haute visibilité, pouvoir produire une copie de l'arrêté autorisant l'épreuve, et être en position au moins un quart d'heure avant le passage. Leur nombre est fixé selon le parcours, avec les services concernés."
+    quote: "ils doivent être en position au moins un quart d'heure avant le passage de la manifestation"
+    check: {type: manual, confirm: "Les signaleurs agréés, équipés et en position 15 minutes avant le passage sont prévus"}
+
+  - id: sec-meteo
+    theme: "Sécurité"
+    title: "Information des participants sur les conditions météo exceptionnelles"
+    article: "III.A.6.1"
+    page: 19
+    force: obligation
+    text: "L'organisateur informe par tout moyen les participants des conditions météorologiques particulières et exceptionnelles susceptibles d'entraîner de graves troubles de santé (température élevée, température ressentie très basse, précipitations importantes, orage)."
+    quote: "l'organisateur devra informer, par tout moyen à sa disposition, les participants de conditions météorologiques particulières et exceptionnelles"
+    check: {type: manual, confirm: "Un dispositif d'information météo des participants est prévu"}
+
+  # ------------------------------------------------------------------ Dispositif de secours (tous types d'épreuve)
+  - id: med-declaration-urgence
+    theme: "Dispositif de secours"
+    title: "Déclaration au service local d'urgence"
+    article: "III.A.7"
+    page: 20
+    force: obligation
+    text: "Toute manifestation doit être déclarée au service local d'urgence compétent."
+    quote: "Toute manifestation doit être déclarée au service local d'urgence compétent."
+    check: {type: manual, confirm: "La manifestation est déclarée au service local d'urgence (SAMU / pompiers)"}
+
+  - id: med-secouristes
+    theme: "Dispositif de secours"
+    title: "Équipe de secouristes d'une association agréée (jusqu'à 500 coureurs)"
+    article: "III.A.7"
+    page: 20
+    force: obligation
+    when: {runners_lte: 500}
+    text: "Moins de 250 coureurs : une équipe de secouristes d'une association agréée par le ministère de l'Intérieur (ou par la Préfecture si son champ d'action est départemental). De 250 à 500 coureurs : une ou plusieurs équipes."
+    quote: "une équipe de secouristes relevant d'une association agréée par le Ministère de l'intérieur"
+    check: {type: count, kind: medical, measure: p1, min: 1, noun: "équipe(s) de secouristes"}
+    fix: "Poser au moins un « Poste de secours » (équipes de secouristes) sur la carte."
+
+  - id: med-secouristes-500
+    theme: "Dispositif de secours"
+    title: "Secouristes d'une association agréée (plus de 500 coureurs)"
+    article: "III.A.7"
+    page: 20
+    force: obligation
+    when: {runners_gt: 500}
+    text: "Au-delà de 500 coureurs, « un nombre de secouristes » relevant d'une association agréée par le ministère de l'Intérieur (ou par la Préfecture) doit être prévu. Le règlement ne chiffre pas ce nombre."
+    quote: "un nombre de secouristes relevant d'une association agréée par le ministère de l'Intérieur"
+    check: {type: count, kind: medical, measure: p1, min: 1, noun: "équipe(s) de secouristes", adapted: true}
+    fix: "Poser au moins un « Poste de secours » ; le nombre d'équipes se dimensionne avec l'association agréée de secourisme."
+
+  - id: med-ambulance-250-500
+    theme: "Dispositif de secours"
+    title: "Ambulance de matériel médical (250 à 500 coureurs)"
+    article: "III.A.7"
+    page: 20
+    force: obligation
+    when: {runners_gte: 250, runners_lte: 500}
+    text: "De 250 à 500 coureurs : la présence d'une ambulance qui n'a pas vocation à transporter mais à fournir le matériel médical nécessaire."
+    quote: "la présence d'une ambulance qui n'a pas vocation à transporter, mais à fournir le matériel médical nécessaire"
+    check: {type: count, kind: ambulance, measure: p1, min: 1, noun: "ambulance(s)"}
+    fix: "Poser une « Ambulance » sur la carte."
+
+  - id: med-medecin
+    theme: "Dispositif de secours"
+    title: "Présence d'au moins un médecin (plus de 500 coureurs ou marathon et au-delà)"
+    article: "III.A.7"
+    page: 20
+    force: obligation
+    when_any:
+      - {runners_gt: 500}
+      - {length_km_gte: 42.0}
+    text: "Au-delà de 500 coureurs, et pour les manifestations de longue durée (marathon et au-delà), la présence d'au moins un médecin est exigée."
+    quote: "la présence d'au moins un médecin"
+    interpretation: "« Marathon et au-delà » est évalué à partir d'un tracé de 42 km ou plus (le tracé GPX est rarement exactement de 42,195 km)."
+    check: {type: count, kind: doctor, measure: p1, min: 1, noun: "médecin(s)"}
+    fix: "Poser un « Médecin » sur la carte (par exemple au poste de secours principal)."
+
+  - id: med-ambulances-500
+    theme: "Dispositif de secours"
+    title: "Ambulances adaptées au nombre de concurrents (plus de 500 coureurs)"
+    article: "III.A.7"
+    page: 20
+    force: obligation
+    when: {runners_gt: 500}
+    text: "Au-delà de 500 coureurs : un nombre d'ambulances adapté au nombre de concurrents, qui n'ont pas vocation à transporter mais à fournir le matériel médical nécessaire. Le règlement ne chiffre pas ce nombre."
+    quote: "un nombre d'ambulances adapté au nombre de concurrents"
+    check: {type: count, kind: ambulance, measure: p1, min: 1, noun: "ambulance(s)", adapted: true}
+    fix: "Poser au moins une « Ambulance » ; le nombre se dimensionne avec le responsable des secours."
+
+  - id: med-liaison
+    theme: "Dispositif de secours"
+    title: "Liaison téléphonique ou radio"
+    article: "III.A.7"
+    page: 20
+    force: obligation
+    text: "Moins de 250 coureurs : liaison téléphonique ou radio avec le service d'urgence. De 250 à 500 : liaison avec un médecin ou le service d'urgence. Marathon et au-delà : équipes de liaison radio ou téléphonique disposées de façon adaptée au terrain, à la distance et au nombre de concurrents."
+    quote: "une liaison téléphonique ou radio avec le service d'urgence"
+    check: {type: manual, confirm: "Les liaisons radio / téléphone entre les postes, la direction de course et les secours sont prévues"}
+
+  - id: med-cumul
+    theme: "Dispositif de secours"
+    title: "Cumul du dispositif « longue durée » et du dispositif lié à l'effectif"
+    article: "III.A.7"
+    page: 20
+    force: information
+    when: {length_km_gte: 42.0}
+    text: "Pour un marathon et au-delà, le dispositif propre aux épreuves de longue durée s'additionne à celui fixé en fonction du nombre de coureurs présents en même temps sur la course. Lorsque plusieurs courses ont lieu simultanément, l'effectif pris en compte est celui de la totalité des engagés."
+    quote: "ce dispositif s'additionne avec celui du nombre de coureurs en même temps sur la course"
+    check: {type: info}
+
+  # ------------------------------------------------------------------ Trail et courses nature — santé secours (titre IV)
+  - id: tr-delai-30
+    theme: "Trail et courses nature — santé secours"
+    title: "Prise en charge en moins de 30 minutes en tout point du parcours"
+    article: "IV.E.2 et IV.E.6.4"
+    page: 41
+    force: obligation
+    when: {event_type: trail}
+    text: "Le dispositif santé secours doit assurer en tout point du parcours une prise en charge de la victime dans un délai maximum de 30 minutes à partir de l'alerte reçue par l'organisation. Secteur accessible par engin motorisé : intervention en moins d'1 h pour l'extraction ; secteur inaccessible : colonne pédestre d'au moins 4 personnes en moins de 2 h (art. IV.E.6.5, p. 43)."
+    quote: "en tout point du parcours une prise en charge de la victime dans un délai maximum de 30mn"
+    note: "L'application mesure le délai entre l'incident et l'arrivée de la première équipe, en supposant l'alerte reçue immédiatement."
+    check: {type: response_time, limit_min: 30}
+    fix: "Ajouter des postes de secours ou les rapprocher des tronçons signalés."
+
+  - id: tr-depart-medecin
+    theme: "Trail et courses nature — santé secours"
+    title: "Médecin à la ligne de départ (plus de 1 000 coureurs)"
+    article: "IV.E.9"
+    page: 44
+    force: obligation
+    when: {event_type: trail, runners_gt: 1000}
+    text: "Sur la ligne de départ, au-delà de 1 000 coureurs sur la journée : un médecin et un infirmier."
+    quote: "si > à 1000 coureurs (2) : un médecin + un infirmier"
+    interpretation: "« Sur la ligne de départ » est interprété comme à moins de 300 m du départ."
+    check: {type: count, kind: doctor, measure: p1, min: 1, noun: "médecin(s)", within: {zone: start, radius_m: 300}}
+    fix: "Poser un « Médecin » près du départ."
+
+  - id: tr-depart-infirmier
+    theme: "Trail et courses nature — santé secours"
+    title: "Infirmier à la ligne de départ (plus de 1 000 coureurs)"
+    article: "IV.E.9"
+    page: 44
+    force: obligation
+    when: {event_type: trail, runners_gt: 1000}
+    text: "Sur la ligne de départ, au-delà de 1 000 coureurs sur la journée : un médecin et un infirmier."
+    quote: "si > à 1000 coureurs (2) : un médecin + un infirmier"
+    check: {type: count, kind: doctor, measure: p2, min: 1, noun: "infirmier(s)", within: {zone: start, radius_m: 300}}
+    fix: "Renseigner un infirmier (paramètre 2 de l'objet « Médecin ») près du départ."
+
+  - id: tr-depart-secouristes
+    theme: "Trail et courses nature — santé secours"
+    title: "Secouristes à la ligne de départ (1 000 coureurs ou moins)"
+    article: "IV.E.9"
+    page: 44
+    force: obligation
+    when: {event_type: trail, runners_lte: 1000}
+    text: "Sur la ligne de départ, en dessous de 1 000 coureurs sur la journée : présence de secouristes."
+    quote: "si < à 1000 coureurs (2) : présence de secouristes"
+    note: "Le tableau dit « > à 1000 » et « < à 1000 » sans traiter exactement 1 000 : l'application applique la règle des secouristes à 1 000 coureurs."
+    check: {type: count, kind: medical, measure: p1, min: 1, noun: "équipe(s) de secouristes", within: {zone: start, radius_m: 300}}
+    fix: "Poser un « Poste de secours » près du départ."
+
+  - id: tr-arrivee-medecin
+    theme: "Trail et courses nature — santé secours"
+    title: "Médecin sur la ligne d'arrivée (plus de 500 coureurs)"
+    article: "IV.E.9"
+    page: 44
+    force: obligation
+    when: {event_type: trail, runners_gt: 500}
+    text: "Un médecin est obligatoire sur la ligne d'arrivée dès que l'une de ces conditions est remplie : plus de 500 coureurs ; temps de course du premier supérieur à 2 h ; aucune ambulance ne peut évacuer vers une structure de soins d'urgences vitales en moins de 30 min."
+    quote: "un médecin obligatoire dès lors qu'une des 3 conditions"
+    check: {type: count, kind: doctor, measure: p1, min: 1, noun: "médecin(s)", within: {zone: finish, radius_m: 300}}
+    fix: "Poser un « Médecin » près de l'arrivée."
+
+  - id: tr-arrivee-conditions
+    theme: "Trail et courses nature — santé secours"
+    title: "Médecin à l'arrivée ou au départ selon le temps du premier et l'évacuation"
+    article: "IV.E.9"
+    page: 44
+    force: obligation
+    when: {event_type: trail}
+    text: "Médecin obligatoire à l'arrivée si le temps de course du premier dépasse 2 h, ou si aucune ambulance ne peut évacuer vers une structure de soins d'urgences vitales en moins de 30 min ; médecin obligatoire au départ en milieu hostile ou dans ce même cas d'évacuation."
+    quote: "temps course du 1er > 2h"
+    check: {type: manual, confirm: "J'ai vérifié ces conditions (temps du premier, milieu hostile, évacuation en moins de 30 min) et placé un médecin si nécessaire"}
+
+  - id: tr-arrivee-secouristes
+    theme: "Trail et courses nature — santé secours"
+    title: "Équipe de secouristes avec brancardage à l'arrivée"
+    article: "IV.E.9"
+    page: 44
+    force: obligation
+    when: {event_type: trail}
+    text: "Sur la ligne d'arrivée : une équipe de secouristes avec matériel de brancardage."
+    quote: "Une équipe de Secouristes avec matériel de brancardage"
+    check: {type: count, kind: medical, measure: p1, min: 1, noun: "équipe(s) de secouristes", within: {zone: finish, radius_m: 300}}
+    fix: "Poser un « Poste de secours » près de l'arrivée."
+
+  - id: tr-arrivee-infirmiere
+    theme: "Trail et courses nature — santé secours"
+    title: "Infirmière à l'arrivée en plus du médecin (plus de 1 000 coureurs)"
+    article: "IV.E.9"
+    page: 44
+    force: obligation
+    when: {event_type: trail, runners_gt: 1000}
+    text: "Sur la ligne d'arrivée, au-delà de 1 000 coureurs : une infirmière en plus du médecin."
+    quote: "Une infirmière en plus du médecin si >1000 coureurs"
+    check: {type: count, kind: doctor, measure: p2, min: 1, noun: "infirmier(s)", within: {zone: finish, radius_m: 300}}
+    fix: "Renseigner un infirmier (paramètre 2 de l'objet « Médecin ») près de l'arrivée."
+
+  - id: tr-ambulances
+    theme: "Trail et courses nature — santé secours"
+    title: "Ambulances de transport vers un hôpital (plus de 1 000 coureurs)"
+    article: "IV.E.9"
+    page: 44
+    force: obligation
+    when: {event_type: trail, runners_gt: 1000}
+    text: "Ambulance pour transport vers une structure hospitalière : 1 ambulance au-delà de 1 000 coureurs sur la journée, 2 ambulances au-delà de 3 000."
+    quote: "2 ambulances si > à 3000 coureurs (2)"
+    check:
+      type: count
+      kind: ambulance
+      measure: p1
+      noun: "ambulance(s) de transport"
+      filter: {p2_min: 1}
+      tiers:
+        - {runners_gt: 1000, min: 1}
+        - {runners_gt: 3000, min: 2}
+    fix: "Poser des « Ambulance » avec le paramètre « transport vers un hôpital » à 1."
+
+  - id: tr-pcc
+    theme: "Trail et courses nature — santé secours"
+    title: "Poste de commandement commun course et secours (1 000 coureurs ou plus)"
+    article: "IV.E.6.3"
+    page: 43
+    force: obligation
+    when: {event_type: trail, runners_gte: 1000}
+    text: "Le PC Secours (souvent couplé avec le PC Course) est obligatoire à partir de 1 000 coureurs : local en retrait, une personne connaissant le terrain et une personne désignée par le directeur médical, outils de communication, main courante horodatée."
+    quote: "Le PC Secours (souvent couplé avec le PC Course) est obligatoire à partir de 1000 coureurs."
+    check: {type: manual, confirm: "Un PC secours équipé, avec main courante horodatée, est prévu"}
+
+  - id: tr-psp-uss
+    theme: "Trail et courses nature — santé secours"
+    title: "Postes de secours principaux et unités de secours secondaires"
+    article: "IV.E.6.1 et IV.E.6.2"
+    page: 43
+    force: obligation
+    when: {event_type: trail}
+    text: "Un poste de secours principal (PSP : médecin, infirmier, secouristes) au minimum toutes les 6 heures de course environ pour les premiers, avec leur localisation mentionnée dans le règlement de l'épreuve. Entre les PSP, des unités de secours secondaires (USS : binôme) pour des premiers secours en 30 minutes maximum environ."
+    quote: "Avec un PSP au minimum toutes les 6 heures de course (environ) pour les premiers"
+    check: {type: manual, confirm: "Le dimensionnement des PSP et USS est validé avec le responsable des secours et le directeur de course"}
+
+  - id: tr-locaux
+    theme: "Trail et courses nature — santé secours"
+    title: "Surface du poste de secours principal"
+    article: "IV.E.8"
+    page: 43
+    force: recommandation
+    when: {event_type: trail}
+    text: "Il est recommandé que les postes de secours principaux soient dans des locaux résistants ou des chapiteaux, chauffés ou climatisés, avec eau et électricité, d'une surface de 15 m² pour 1 000 sportifs (hors soins de confort)."
+    quote: "d'une surface de 15 m2 pour 1000 sportifs"
+    check: {type: info, compute: first_aid_area, m2_per_1000: 15}
+
+  - id: tr-barrieres
+    theme: "Trail et courses nature — santé secours"
+    title: "Barrières horaires (plus de 40 km-effort)"
+    article: "IV.D.5.1"
+    page: 41
+    force: obligation
+    when: {event_type: trail, km_effort_gt: 40}
+    text: "Les barrières horaires, placées en des endroits d'où l'on peut évacuer les coureurs, sont obligatoires pour les parcours de plus de 40 km-effort."
+    quote: "Elles sont obligatoires pour les parcours de plus de 40 km effort."
+    check: {type: manual, confirm: "Des barrières horaires sont prévues, aux endroits d'où l'on peut évacuer les coureurs"}
+
+  - id: tr-controles
+    theme: "Trail et courses nature — santé secours"
+    title: "Points de contrôle"
+    article: "IV.D.5"
+    page: 41
+    force: recommandation
+    when: {event_type: trail}
+    text: "Des points de contrôle (manuels ou électroniques) donnent la visibilité sur les flux ; un premier contrôle au départ est fortement recommandé et il est conseillé d'en prévoir au minimum tous les 15 km."
+    quote: "il est conseillé de prévoir un point de contrôle au minimum tous les 15 km"
+    check: {type: manual, confirm: "Des points de contrôle sont prévus (au départ, puis au minimum tous les 15 km)"}
+
+  - id: tr-fermeture
+    theme: "Trail et courses nature — santé secours"
+    title: "Équipes de fermeture du parcours"
+    article: "IV.D.6"
+    page: 41
+    force: obligation
+    when: {event_type: trail}
+    text: "Une ou des équipes de fermeture sont mises en place dès le départ ; les serre-files n'abandonnent jamais un coureur hors délai seul entre deux points de contrôle. Une équipe compte 2 personnes au minimum."
+    quote: "Une équipe est composée de 2 personnes au minimum."
+    check: {type: manual, confirm: "Des équipes de fermeture de 2 personnes minimum sont prévues"}
