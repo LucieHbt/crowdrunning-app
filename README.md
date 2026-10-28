@@ -1,4 +1,4 @@
-# CrowdRunning — prototype
+# CrowdRunning
 
 Aide à la décision pour préparer un événement de course à pied : on pose les équipements sur une carte, on simule l'écoulement des coureurs et on lit les zones de congestion.
 
@@ -60,4 +60,4 @@ streamlit run app.py
 2. Rôle des bénévoles (signalisation, ravitaillement, fermeture de voirie) et effet des incidents sur la foule.
 3. Compléter le moteur de règles avec les autres textes (Code du sport, arrêtés préfectoraux, guides sur les sanitaires) : ils s'ajoutent dans `rules.yaml`.
 4. Recommandations automatiques (par exemple placer les points d'eau manquants), comparaison de scénarios, rapport PDF.
-5. Calibration sur observations réelles.
+5. Calibrage sur observations réelles.
