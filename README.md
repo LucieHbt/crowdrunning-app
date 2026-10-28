@@ -1,63 +1,164 @@
 # CrowdRunning
 
-Aide à la décision pour préparer un événement de course à pied : on pose les équipements sur une carte, on simule l'écoulement des coureurs et on lit les zones de congestion.
+CrowdRunning est un prototype d'aide à la décision destiné aux organisateurs de courses à pied. À partir d'un tracé GPX et de paramètres d'organisation, l'application simule les flux de coureurs, visualise les zones de congestion et aide à préparer le dispositif opérationnel de l'événement.
+
+L'objectif est de mieux anticiper les difficultés de circulation, d'identifier les points sensibles du parcours et d'évaluer différents scénarios d'organisation avant le jour de la course.
+
+## Fonctionnalités principales
+
+- **Importation du parcours :** chargement d'un fichier GPX pour définir le tracé de la course.
+- **Paramétrage des départs :** définition du nombre de participants, du nombre de vagues, de l'intervalle entre les départs et de la dispersion des allures.
+- **Simulation des flux :** estimation des vitesses et des densités de coureurs le long du parcours.
+- **Visualisation cartographique :** représentation du parcours, des équipements et des zones de congestion, avec animation des déplacements lorsque cette fonctionnalité est activée.
+- **Analyse des points sensibles :** identification des secteurs où le débit devient contraint ou où des congestions peuvent apparaître.
+- **Gestion des équipements :** positionnement et paramétrage des points d'eau, toilettes, postes de secours, médecins, ambulances, bénévoles et rétrécissements.
+- **Analyse opérationnelle :** estimation des files d'attente, des besoins en équipements et des délais d'intervention selon les hypothèses retenues.
+- **Vérification réglementaire :** contrôle de certaines exigences du règlement FFA 2026, selon le contexte de l'épreuve et les règles implémentées.
+- **Export des résultats :** sauvegarde des scénarios et export des données utiles à leur analyse et à leur exploitation.
 
 ## Installation
-Python 3.11 ou plus récent recommandé.
 
-```bash
+### Prérequis
+
+- Python 3.11 ou version ultérieure recommandé.
+- Git, facultatif, si vous souhaitez cloner le dépôt.
+- Un environnement Windows, macOS ou Linux compatible avec Python.
+
+### 1. Récupérer le projet
+
+Placez-vous dans le dossier contenant `app.py`.
+
+### 2. Créer l'environnement virtuel
+
+Sous Windows PowerShell :
+
+```powershell
 python -m venv .venv
-# Windows PowerShell
-.venv\Scripts\Activate.ps1
-# macOS / Linux
-source .venv/bin/activate
-pip install -r requirements.txt
-streamlit run app.py
+.\.venv\Scripts\Activate.ps1
 ```
 
-## Utilisation
-1. Importer un tracé GPX (sinon un petit parcours de démonstration est utilisé).
-2. Dans **Éditeur de scénario**, choisir un type d'objet puis cliquer sur la carte pour le poser : point d'eau, poste d'épongeage, toilettes, poste de secours, médecin, ambulance, bénévoles, rétrécissement. Les paramètres (capacité, durée, largeur…) se modifient dans le tableau ; on peut aussi supprimer des objets.
-3. Régler les paramètres de la barre latérale, puis **Simuler et animer**.
-4. Lire le ruban de densité, la carte animée, la carte de chaleur espace-temps, les files d'attente (points d'eau, toilettes) et les délais d'intervention des secours.
-   L'onglet **📜 Conformité** (4ᵉ onglet) confronte le scénario au règlement FFA 2026 : anneau de synthèse, avancement par thème, échéances administratives, points à traiter en priorité, puis détail règle par règle (article, page, citation) avec export CSV de la checklist. Des pastilles sur les onglets signalent le nombre d'objets posés et d'écarts. Le contexte de l'épreuve (route ou trail, voie publique, etc.) se règle dans la barre latérale, rubrique « Réglementation » ; l'onglet se met à jour aussitôt.
-5. Enregistrer le scénario (GeoJSON, tracé + objets) pour le recharger plus tard ; télécharger la synthèse JSON et les trajectoires CSV.
+Sous macOS ou Linux :
 
-## Architecture
-- `app.py` : interface Streamlit (éditeur de carte, paramètres, résultats, exports).
-- `meso.py` : moteur mésoscopique. Tous les partants sont suivis en 1D le long du parcours ; la densité de chaque tronçon (≈ 10 m) est calculée sur l'effectif complet, puis la vitesse de chaque coureur en découle (relation vitesse-densité inspirée de Weidmann). Gère vagues, points d'eau avec files d'attente, rétrécissements.
-- `rules.yaml` + `rules.py` : moteur de règles. `rules.yaml` contient les règles du règlement FFA 2026, chacune avec son article, sa page imprimée, une courte citation, ses conditions d'application et son type de contrôle ; `rules.py` les évalue sans aucun seuil codé en dur. Pour changer une règle ou en ajouter une, on modifie seulement `rules.yaml`.
-- `plan_operationnel.py` : génération du **Plan Opérationnel** (PDF) depuis l'onglet Résultats : fermetures de routes, personnel, points d'eau, scénarios de repli, médias, flux aux intersections, services d'urgence, conformité. Nécessite `reportlab` et `matplotlib`.
-- `test_rules.py` : tests du moteur ; avec `REGLEMENT_PDF=<chemin du PDF>`, il vérifie aussi que chaque citation figure bien dans le règlement.
-- `queues.py` : files d'attente des toilettes avant le départ (FIFO multi-cabines) et modèle de secours (incidents tirés dans l'occupation simulée, Monte Carlo, temps d'intervention).
-- `scenario.py` : objets posés sur la carte, accrochage au tracé, bilan d'équipements, export/import GeoJSON.
-- `simulator.py` : lecture GPX, projection locale, moteur microscopique 2D (non utilisé pour les densités ; réservé à de futures micro-simulations locales).
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
 
-## Ce qui influence la simulation aujourd'hui
-- **Points d'eau** posés (postes de service simultanés, durée de service) : files d'attente et ralentissements. Sans point d'eau posé, un point automatique est placé tous les 5 km.
-- **Rétrécissements** posés (largeur utile, longueur) : la largeur locale remplace celle du couloir.
-- **Toilettes** posées à moins de 500 m du départ : file d'attente avant le départ (attente, part d'usagers en retard pour leur vague, cabines estimées nécessaires pour que 95 % attendent moins que la tolérance). Les toilettes plus loin sur le parcours sont comptées dans le bilan mais pas simulées.
-- **Postes de secours** posés (équipes, délai de mobilisation) : incidents tirés selon le taux pour 1 000 partants et l'occupation réelle du parcours, délai d'intervention (mobilisation + trajet le long du tracé + attente si les équipes sont occupées), 200 tirages Monte Carlo, profil de délai le long du parcours.
-- Les **bénévoles**, **médecins**, **ambulances** et **postes d'épongeage** sont comptés dans le bilan et contrôlés par le moteur de règles, sans effet sur la foule.
-- Toilettes et secours n'agissent pas en retour sur la foule (un incident ne bloque pas le parcours).
+### 3. Installer les dépendances
 
-## Limites importantes
-- Prototype pédagogique, pas un outil certifié de sécurité. Les sorties ne remplacent ni une analyse de sécurité ni une validation terrain.
-- La relation vitesse-densité est une adaptation illustrative inspirée de Weidmann ; elle n'est ni la reproduction exacte du modèle original ni calibrée sur des mesures.
-- Modèle 1D : le couloir est décrit par sa largeur, sans obstacles 2D ; les dépassements ne sont pas limités par la largeur.
-- Les coureurs en attente à un point d'eau sont comptés en amont du poste (≈ 2 pers./m²) ; le comportement réel peut différer fortement.
-- La zone d'arrivée (file après la ligne) n'est pas modélisée.
-- Toilettes et secours reposent sur des hypothèses à calibrer (fenêtre d'arrivée, durée d'usage, vitesse des équipes, durée de prise en charge, part d'incidents à l'arrivée). Personne ne renonce à la file ni ne change de site en cours d'attente ; les équipes ne sont pas gênées par les coureurs et se déplacent uniquement le long du tracé.
-- Le tracé est converti dans un repère local (projection équirectangulaire), correcte sur quelques kilomètres ; une projection UTM est prévue.
-- Le moteur de règles ne reprend que ce que contient le **règlement FFA 2026** (Reglementation_Running_2026.pdf). Il ne remplace ni le Code du sport, ni les arrêtés préfectoraux ou municipaux, ni l'avis de la FFA et de la préfecture.
-- Ce règlement **ne fixe aucune règle** sur les toilettes, la densité de coureurs, la largeur de couloir (hors cross), ni de délai d'intervention des secours sur route (les 30 min concernent les trails) ; il ne chiffre pas non plus le nombre de secouristes ou d'ambulances sur route (« un nombre adapté »). Les seuils 0,3 / 0,5 coureur/m², le délai visé et l'attente tolérée aux toilettes sont ceux de l'application.
-- Certaines règles du texte disent « environ » (ravitaillement vers le km 5 puis tous les 5 km, épongeage à mi-chemin) : l'application les interprète avec une tolérance (± 1 km, ± 25 %), indiquée à l'écran et modifiable dans `rules.yaml`.
-- Les règles qui ne se vérifient pas sur la carte (licences, signaleurs, liaisons radio, zones de propreté…) apparaissent comme « à confirmer » avec une case à cocher ; la confirmation n'est pas conservée dans le fichier de scénario.
-- Les dates limites de demande de label (art. II.B.1) et les règles des labels, relais, sas élite, mesurage détaillé et courses à obstacles ne sont pas évaluées.
+Si le fichier `requirements.txt` est présent à la racine du projet :
 
-## Prochaines étapes
-1. Projection UTM et couloir 2D (Shapely) avec largeurs issues d'OSM.
-2. Rôle des bénévoles (signalisation, ravitaillement, fermeture de voirie) et effet des incidents sur la foule.
-3. Compléter le moteur de règles avec les autres textes (Code du sport, arrêtés préfectoraux, guides sur les sanitaires) : ils s'ajoutent dans `rules.yaml`.
-4. Recommandations automatiques (par exemple placer les points d'eau manquants), comparaison de scénarios, rapport PDF.
-5. Calibrage sur observations réelles.
+```bash
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+```
+
+### 4. Lancer l'application
+
+```bash
+python -m streamlit run app.py
+```
+
+L'application s'ouvre dans votre navigateur. Si la page ne s'ouvre pas automatiquement, utilisez l'adresse locale indiquée dans le terminal.
+
+**Important :** si vous déplacez le dossier du projet, recréez l'environnement virtuel `.venv`. Celui-ci contient des chemins propres à son emplacement et ne doit pas être considéré comme portable.
+
+## Guide d'utilisation
+
+### 1. Importer le parcours
+
+Importez un fichier GPX correspondant au tracé réel de l'épreuve. Vérifiez que le parcours est correctement représenté sur la carte avant de lancer une simulation.
+
+### 2. Configurer le scénario
+
+Dans la barre latérale, définissez les principaux paramètres de l'événement : effectif, organisation des départs, allures, conditions météorologiques et paramètres de simulation disponibles.
+
+Dans l'éditeur de scénario, sélectionnez un type d'équipement puis cliquez sur la carte pour le positionner. Selon les objets disponibles, vous pouvez ajuster leurs paramètres, modifier leur emplacement ou les supprimer.
+
+### 3. Lancer la simulation
+
+Après avoir vérifié les paramètres, lancez la simulation. Les résultats dépendent notamment de l'effectif, de la répartition des allures, des vagues de départ, de la géométrie du parcours et des équipements configurés.
+
+### 4. Analyser les résultats
+
+Examinez les représentations cartographiques et les indicateurs proposés pour repérer les secteurs sensibles, comprendre l'évolution des flux et identifier les situations nécessitant une attention particulière.
+
+Les estimations de files d'attente et de moyens opérationnels doivent être interprétées au regard des hypothèses utilisées.
+
+### 5. Enregistrer et exporter
+
+Lorsque les fonctionnalités correspondantes sont disponibles, sauvegardez votre scénario pour le reprendre ultérieurement et exportez les résultats afin de les analyser ou de les intégrer à votre préparation opérationnelle.
+
+## Comprendre les niveaux de densité
+
+Les seuils suivants constituent des repères de lecture utilisés par l'application. Ils ne correspondent pas à des seuils réglementaires universels.
+
+| Densité estimée | Interprétation |
+|---|---|
+| Inférieure à 0,3 coureur/m² | **Flux fluide** : circulation relativement peu dense |
+| De 0,3 à 0,5 coureur/m² | **Flux contraint** : interactions plus fréquentes entre les coureurs |
+| Supérieure à 0,5 coureur/m² | **Congestion** : secteur à examiner attentivement |
+
+Ces valeurs sont des indicateurs de simulation. Elles ne suffisent pas, à elles seules, à caractériser le niveau de sécurité d'une situation réelle.
+
+## Architecture du projet
+
+Les principaux modules et leurs responsabilités sont les suivants, sous réserve de leur présence dans la version utilisée.
+
+| Fichier | Rôle |
+|---|---|
+| `app.py` | Interface Streamlit, paramétrage, affichage cartographique, résultats et exports. |
+| `meso.py` | Moteur de simulation mésoscopique des flux de coureurs. |
+| `rules.yaml` | Définition des règles réglementaires prises en charge par l'application. |
+| `rules.py` | Évaluation des règles et contrôle du scénario. |
+| `plan_operationnel.py` | Génération du plan opérationnel et de ses documents de synthèse. |
+| `test_rules.py` | Tests du moteur de règles et vérification des citations lorsque le PDF de référence est fourni. |
+| `queues.py` | Modélisation des files d'attente et estimation des délais d'intervention. |
+| `scenario.py` | Gestion des objets du scénario, de leur positionnement et des échanges GeoJSON. |
+| `simulator.py` | Outils de lecture et de projection du parcours et fonctionnalités de simulation microscopique expérimentales. |
+
+Les dépendances exactes et les responsabilités de chaque module peuvent évoluer avec les versions du projet. Consultez le code et le fichier `requirements.txt` pour connaître l'architecture effectivement déployée.
+
+## Principes de modélisation
+
+La simulation repose sur des hypothèses destinées à représenter les déplacements collectifs des coureurs à une échelle adaptée à l'analyse d'un événement.
+
+Dans le modèle mésoscopique décrit par le projet, les participants progressent le long du parcours et leur vitesse dépend notamment de la densité locale. La relation vitesse-densité s'inspire de travaux de modélisation des déplacements piétonniers, notamment ceux associés à Weidmann.
+
+Les vagues de départ, les points de service et les rétrécissements peuvent modifier les flux selon les mécanismes implémentés.
+
+Les résultats sont des estimations produites par le modèle, et non des prédictions certaines du comportement de chaque participant.
+
+## Limites et précautions d'utilisation
+
+CrowdRunning est un **prototype d'aide à la décision**. Il ne constitue pas un outil certifié de sécurité et ne remplace ni une étude spécialisée, ni une reconnaissance de terrain, ni la validation des dispositifs par les autorités et les professionnels compétents.
+
+Les principales limites à prendre en compte sont les suivantes :
+
+- **Modélisation simplifiée :** les relations entre densité, vitesse et comportement des coureurs reposent sur des hypothèses qui doivent être confrontées à des observations réelles.
+- **Représentation du parcours :** une modélisation principalement longitudinale ne reproduit pas toutes les interactions latérales, les dépassements, les obstacles et les comportements individuels.
+- **Équipements :** leur effet sur la circulation dépend des mécanismes effectivement intégrés. Un équipement affiché ou comptabilisé n'influence pas nécessairement la dynamique de la foule.
+- **Files d'attente :** les estimations reposent sur des hypothèses de durée de service, de capacité et de répartition des arrivées. Les comportements réels peuvent être différents.
+- **Secours :** les délais calculés dépendent des hypothèses d'incident, de mobilisation, de déplacement et de disponibilité des équipes.
+- **Réglementation :** les contrôles couvrent uniquement les exigences implémentées et ne constituent pas une vérification exhaustive de la conformité de l'événement.
+
+Le règlement FFA 2026 ne représente qu'une partie du cadre applicable. Selon l'épreuve et son contexte, d'autres dispositions peuvent devoir être prises en compte, notamment le Code du sport, les arrêtés préfectoraux ou municipaux et les prescriptions des autorités compétentes.
+
+Les seuils de densité, les délais cibles et les tolérances opérationnelles définis dans l'application ne doivent pas être présentés comme des obligations réglementaires lorsqu'ils ne le sont pas.
+
+## Développements envisagés
+
+Les pistes d'évolution du projet comprennent notamment :
+
+1. **Amélioration de la représentation spatiale :** prise en compte plus fine de la largeur des voies, des obstacles et de la géométrie locale.
+2. **Calibrage sur des données réelles :** comparaison des résultats simulés aux chronométrages, aux effectifs et aux observations de terrain.
+3. **Enrichissement des comportements :** modélisation plus détaillée des interactions entre coureurs, équipements, incidents et bénévoles.
+4. **Aide à la décision :** recommandations de positionnement des équipements et identification automatique des secteurs à examiner.
+5. **Comparaison de scénarios :** évaluation de plusieurs organisations de départ, répartitions des moyens et configurations de parcours.
+6. **Amélioration des restitutions :** rapports opérationnels et exports facilitant la préparation et le suivi de l'événement.
+
+## Avertissement
+
+Les résultats fournis par CrowdRunning doivent être considérés comme des éléments d'aide à la réflexion. Toute décision concernant la sécurité, les moyens de secours, les fermetures de voies ou l'organisation d'une manifestation doit être validée par les personnes et autorités compétentes.
+
+**CrowdRunning : simuler les flux pour mieux anticiper les contraintes d'organisation.**
