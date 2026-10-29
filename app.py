@@ -346,7 +346,6 @@ st.markdown(f"""<style>
 
 /* Éditeur cartographique façon Google Maps : la carte occupe la page, les commandes flottent par-dessus. */
 .st-key-map_stage {{ position: relative; }}
-.st-key-map_stage iframe {{ height: calc(100vh - 190px) !important; min-height: 560px; }}
 .st-key-map_ov_left, .st-key-map_ov_right {{ position: absolute !important; z-index: 30; width: auto !important; gap: .5rem !important; }}
 .st-key-map_ov_left {{ top: 12px; left: 12px; width: 236px !important; gap: .4rem !important; }}
 .st-key-map_ov_right {{ top: 12px; left: 262px; right: 12px; }}
@@ -1192,7 +1191,7 @@ if selected_tab == "Édition":
         # Seul le clic est renvoyé : déplacer ou zoomer la carte ne relance donc pas l'application.
         map_state = st_folium(
             base_map, feature_group_to_add=objects_layer, returned_objects=["last_clicked"],
-            height=700, key="editor_map",
+            height=700, use_container_width=True, key="editor_map",
         )
 
     if loaded is not None:
